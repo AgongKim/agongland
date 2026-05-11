@@ -56,9 +56,9 @@ function buildUI() {
   panel.id = 'agongland-panel';
   panel.innerHTML = `
     <div id="agl-header">
+      <button id="agl-toggle" title="패널 숨기기">▶</button>
       <span id="agl-title">같이보기 채팅</span>
       <span id="agl-count">0명</span>
-      <button id="agl-toggle" title="패널 숨기기">◀</button>
     </div>
     <div id="agl-messages"></div>
     <div id="agl-nick-row">
@@ -88,7 +88,7 @@ let collapsed = false;
 function togglePanel() {
   collapsed = !collapsed;
   panel.classList.toggle('agl-collapsed', collapsed);
-  document.getElementById('agl-toggle').textContent = collapsed ? '▶' : '◀';
+  document.getElementById('agl-toggle').textContent = collapsed ? '◀' : '▶';
 }
 
 function setConnected(ok) {
