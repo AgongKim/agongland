@@ -292,6 +292,16 @@
   border-color: #ff6b6b;
 }
 
+.agl-nick-required #agl-nick-input {
+  border-color: #ff6b6b;
+  animation: agl-pulse 1.5s ease infinite;
+}
+
+@keyframes agl-pulse {
+  0%, 100% { border-color: #ff6b6b; }
+  50% { border-color: #ff0000; box-shadow: 0 0 6px rgba(255,0,0,0.4); }
+}
+
 #agl-nick-btn {
   background: #333;
   border: none;

@@ -15,9 +15,14 @@ function init() {
   initialized = true;
 
   Promise.all([loadNickname(), getLocalIP()]).then(([name, ip]) => {
+    cachedIP = ip;
     nickname = name;
     buildUI();
-    connectToBackground(ip);
+    if (nickname) {
+      connectToBackground();
+    } else {
+      showNicknameRequired();
+    }
   });
 }
 
@@ -57,7 +62,7 @@ function buildUI() {
   panel.innerHTML = `
     <div id="agl-header">
       <button id="agl-toggle" title="패널 숨기기">▶</button>
-      <span id="agl-title">같이보기 채팅</span>
+      <span id="agl-title">아공랜드</span>
       <span id="agl-count">0명</span>
     </div>
     <div id="agl-songs">
@@ -183,6 +188,14 @@ function addSong() {
   input.value = '';
 }
 
+function showNicknameRequired() {
+  const nickInput = document.getElementById('agl-nick-input');
+  const nickRow = document.getElementById('agl-nick-row');
+  if (nickRow) nickRow.classList.add('agl-nick-required');
+  if (nickInput) nickInput.focus();
+  appendMessage({ type: 'system', text: '닉네임을 설정하면 채팅이 시작됩니다.' });
+}
+
 function togglePanel() {
   collapsed = !collapsed;
   panel.classList.toggle('agl-collapsed', collapsed);
@@ -228,8 +241,7 @@ function appendMessage({ type, nickname: nick, text, time, count }) {
 // ── Background 연결 ───────────────────────────────────────────
 let cachedIP = null;
 
-function connectToBackground(ip) {
-  if (ip) cachedIP = ip;
+function connectToBackground() {
   try {
     port = chrome.runtime.connect({ name: 'agongland' });
 
@@ -255,7 +267,7 @@ function connectToBackground(ip) {
       setConnected(false);
       if (!chrome.runtime?.id) return;
       appendMessage({ type: 'system', text: '연결 끊김. 재연결 중...' });
-      setTimeout(() => connectToBackground(), 3000);
+      setTimeout(connectToBackground, 3000);
     });
   } catch {
     // 익스텐션이 재로드된 경우 - 페이지 새로고침 필요
@@ -279,10 +291,15 @@ function sendChat() {
 function changeNickname() {
   const input = document.getElementById('agl-nick-input');
   const name = input?.value.trim();
-  if (!name || !port || !chrome.runtime?.id) return;
+  if (!name) return;
   nickname = name;
   saveNickname(name);
-  port.postMessage({ type: 'join', nickname });
+  document.getElementById('agl-nick-row')?.classList.remove('agl-nick-required');
+  if (!port) {
+    connectToBackground();
+  } else if (chrome.runtime?.id) {
+    port.postMessage({ type: 'join', nickname });
+  }
 }
 
 // ── 초기 로드 ─────────────────────────────────────────────────

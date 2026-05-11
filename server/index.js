@@ -67,7 +67,12 @@ wss.on('connection', (ws, req) => {
     }
 
     if (msg.type === 'join') {
-      nickname = sanitize(msg.nickname) || `익명${Math.floor(Math.random() * 9000) + 1000}`;
+      const name = sanitize(msg.nickname);
+      if (!name) {
+        ws.send(JSON.stringify({ type: 'error', text: '닉네임을 입력해주세요.' }));
+        return;
+      }
+      nickname = name;
       clients.add(ws);
       ws.send(JSON.stringify({ type: 'joined', nickname, count: clients.size }));
       ws.send(JSON.stringify({ type: 'song:list', songs }));
