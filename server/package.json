@@ -4,12 +4,19 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build:win": "pkg . --target node18-win-x64 --output ../dist/agongland-server.exe"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ]
   },
   "dependencies": {
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "@yao-pkg/pkg": "^5.12.0"
   }
 }
