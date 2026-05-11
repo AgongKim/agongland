@@ -60,6 +60,19 @@ function buildUI() {
       <span id="agl-title">같이보기 채팅</span>
       <span id="agl-count">0명</span>
     </div>
+    <div id="agl-songs">
+      <div id="agl-songs-header">
+        <span id="agl-songs-label">노래 목록</span>
+        <button id="agl-songs-toggle">▲</button>
+      </div>
+      <div id="agl-songs-body">
+        <div id="agl-songs-list"></div>
+        <div id="agl-songs-add">
+          <input id="agl-song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
+          <button id="agl-song-add-btn">추가</button>
+        </div>
+      </div>
+    </div>
     <div id="agl-messages"></div>
     <div id="agl-nick-row">
       <input id="agl-nick-input" type="text" placeholder="닉네임" maxlength="12" />
@@ -74,6 +87,11 @@ function buildUI() {
 
   document.getElementById('agl-nick-input').value = nickname;
   document.getElementById('agl-toggle').addEventListener('click', togglePanel);
+  document.getElementById('agl-songs-toggle').addEventListener('click', toggleSongs);
+  document.getElementById('agl-song-add-btn').addEventListener('click', addSong);
+  document.getElementById('agl-song-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing) addSong();
+  });
   document.getElementById('agl-nick-btn').addEventListener('click', changeNickname);
   document.getElementById('agl-nick-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') changeNickname();
@@ -85,6 +103,86 @@ function buildUI() {
 }
 
 let collapsed = false;
+let songsCollapsed = false;
+
+function toggleSongs() {
+  songsCollapsed = !songsCollapsed;
+  document.getElementById('agl-songs-body').style.display = songsCollapsed ? 'none' : 'block';
+  document.getElementById('agl-songs-toggle').textContent = songsCollapsed ? '▼' : '▲';
+}
+
+function renderSongs(songs) {
+  const list = document.getElementById('agl-songs-list');
+  const label = document.getElementById('agl-songs-label');
+  if (!list) return;
+  if (label) label.textContent = `노래 목록 (${songs.length})`;
+  list.innerHTML = '';
+  songs.forEach((song, idx) => {
+    const div = document.createElement('div');
+    div.className = 'agl-song-item';
+    div.dataset.id = song.id;
+    div.innerHTML = `
+      <span class="agl-song-num">${idx + 1}</span>
+      <div class="agl-song-info">
+        <span class="agl-song-title">${song.title}</span>
+        <span class="agl-song-user">@${song.nickname}</span>
+      </div>
+      <div class="agl-song-actions">
+        <button class="agl-song-btn" data-action="up" title="위로">▲</button>
+        <button class="agl-song-btn" data-action="down" title="아래로">▼</button>
+        <button class="agl-song-btn" data-action="edit" title="수정">✎</button>
+        <button class="agl-song-btn" data-action="del" title="삭제">✕</button>
+      </div>
+    `;
+    div.querySelectorAll('.agl-song-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleSongAction(song.id, btn.dataset.action, song.title));
+    });
+    list.appendChild(div);
+  });
+}
+
+function handleSongAction(id, action, currentTitle) {
+  if (action === 'up') port?.postMessage({ type: 'song:move', id, direction: 'up' });
+  if (action === 'down') port?.postMessage({ type: 'song:move', id, direction: 'down' });
+  if (action === 'del') port?.postMessage({ type: 'song:delete', id });
+  if (action === 'edit') {
+    const item = document.querySelector(`.agl-song-item[data-id="${id}"]`);
+    if (!item) return;
+    const info = item.querySelector('.agl-song-info');
+    const actions = item.querySelector('.agl-song-actions');
+    info.innerHTML = `<input class="agl-song-edit-input" value="${currentTitle}" maxlength="100" />`;
+    actions.innerHTML = `
+      <button class="agl-song-btn agl-song-save">저장</button>
+      <button class="agl-song-btn agl-song-cancel">취소</button>
+    `;
+    const input = info.querySelector('input');
+    input.focus();
+    input.select();
+    actions.querySelector('.agl-song-save').addEventListener('click', () => {
+      const title = input.value.trim();
+      if (title) port?.postMessage({ type: 'song:edit', id, title });
+    });
+    actions.querySelector('.agl-song-cancel').addEventListener('click', () => {
+      port?.postMessage({ type: 'song:list:request' }); // 서버에 재요청 대신 마지막 목록 재렌더
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) {
+        const title = input.value.trim();
+        if (title) port?.postMessage({ type: 'song:edit', id, title });
+      }
+      if (e.key === 'Escape') actions.querySelector('.agl-song-cancel').click();
+    });
+  }
+}
+
+function addSong() {
+  const input = document.getElementById('agl-song-input');
+  const title = input?.value.trim();
+  if (!title || !port) return;
+  port.postMessage({ type: 'song:add', title });
+  input.value = '';
+}
+
 function togglePanel() {
   collapsed = !collapsed;
   panel.classList.toggle('agl-collapsed', collapsed);
@@ -146,6 +244,8 @@ function connectToBackground(ip) {
         updateCount(msg.count);
         setConnected(true);
         appendMessage({ type: 'system', text: '연결됐습니다.' });
+      } else if (msg.type === 'song:list') {
+        renderSongs(msg.songs);
       } else {
         appendMessage(msg);
       }

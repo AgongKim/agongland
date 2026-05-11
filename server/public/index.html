@@ -29,6 +29,113 @@
     #header h1 { font-size: 16px; font-weight: 700; }
     #count { font-size: 12px; color: #aaa; }
 
+    /* 노래 목록 */
+    #songs {
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    #songs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #161616;
+      cursor: pointer;
+    }
+
+    #songs-label { font-size: 13px; font-weight: 600; color: #aaa; }
+
+    #songs-toggle {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #songs-body { background: #111; }
+
+    #songs-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .song-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .song-num { font-size: 11px; color: #555; width: 18px; text-align: right; flex-shrink: 0; }
+
+    .song-info { flex: 1; min-width: 0; }
+
+    .song-title { font-size: 14px; color: #e8e8e8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+    .song-user { font-size: 11px; color: #666; }
+
+    .song-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+    .song-btn {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #888;
+      font-size: 12px;
+      padding: 3px 7px;
+      cursor: pointer;
+    }
+
+    .song-btn:hover { background: #2a2a2a; color: #fff; }
+    .song-save { color: #4caf50 !important; border-color: #4caf50 !important; }
+
+    .song-edit-input {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid #ff6b6b;
+      border-radius: 4px;
+      color: #e8e8e8;
+      font-size: 13px;
+      padding: 4px 8px;
+      outline: none;
+    }
+
+    #songs-add {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid #1a1a1a;
+    }
+
+    #song-input {
+      flex: 1;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #e8e8e8;
+      font-size: 14px;
+      padding: 8px 12px;
+      outline: none;
+    }
+
+    #song-input:focus { border-color: #ff6b6b; }
+
+    #song-add-btn {
+      background: #333;
+      border: none;
+      border-radius: 8px;
+      color: #ccc;
+      font-size: 13px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    #song-add-btn:hover { background: #444; color: #fff; }
+
+    /* 메시지 */
     #messages {
       flex: 1;
       overflow-y: auto;
@@ -39,41 +146,12 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    .msg {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      word-break: break-all;
-      line-height: 1.5;
-    }
-
-    .nick {
-      color: #ff6b6b;
-      font-weight: 700;
-      font-size: 13px;
-      flex-shrink: 0;
-      max-width: 90px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
+    .msg { display: flex; align-items: baseline; gap: 6px; word-break: break-all; line-height: 1.5; }
+    .nick { color: #ff6b6b; font-weight: 700; font-size: 13px; flex-shrink: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .nick.me { color: #66b2ff; }
-
     .text { flex: 1; font-size: 14px; }
-
-    .time {
-      font-size: 10px;
-      color: #555;
-      flex-shrink: 0;
-    }
-
-    .system {
-      justify-content: center;
-      font-size: 12px;
-      color: #666;
-      font-style: italic;
-    }
+    .time { font-size: 10px; color: #555; flex-shrink: 0; }
+    .system { justify-content: center; font-size: 12px; color: #666; font-style: italic; }
 
     #nick-bar {
       display: flex;
@@ -151,6 +229,20 @@
     <span id="count">0명</span>
   </div>
 
+  <div id="songs">
+    <div id="songs-header">
+      <span id="songs-label">노래 목록 (0)</span>
+      <button id="songs-toggle">▲</button>
+    </div>
+    <div id="songs-body">
+      <div id="songs-list"></div>
+      <div id="songs-add">
+        <input id="song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
+        <button id="song-add-btn">추가</button>
+      </div>
+    </div>
+  </div>
+
   <div id="messages"></div>
 
   <div id="nick-bar">
@@ -170,23 +262,102 @@
     let ws = null;
     let nickname = localStorage.getItem(STORAGE_KEY) || '';
     let reconnectTimer = null;
+    let songsCollapsed = false;
 
     const messagesEl = document.getElementById('messages');
     const countEl = document.getElementById('count');
     const nickInput = document.getElementById('nick-input');
-    const nickBtn = document.getElementById('nick-btn');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
+    const songsBody = document.getElementById('songs-body');
+    const songsToggle = document.getElementById('songs-toggle');
+    const songsList = document.getElementById('songs-list');
+    const songsLabel = document.getElementById('songs-label');
+    const songInput = document.getElementById('song-input');
 
     nickInput.value = nickname;
+
+    document.getElementById('songs-header').addEventListener('click', () => {
+      songsCollapsed = !songsCollapsed;
+      songsBody.style.display = songsCollapsed ? 'none' : 'block';
+      songsToggle.textContent = songsCollapsed ? '▼' : '▲';
+    });
+
+    document.getElementById('song-add-btn').addEventListener('click', addSong);
+    songInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) addSong();
+    });
+
+    function addSong() {
+      const title = songInput.value.trim();
+      if (!title || !ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ type: 'song:add', title }));
+      songInput.value = '';
+    }
+
+    function renderSongs(songs) {
+      songsLabel.textContent = `노래 목록 (${songs.length})`;
+      songsList.innerHTML = '';
+      songs.forEach((song, idx) => {
+        const div = document.createElement('div');
+        div.className = 'song-item';
+        div.dataset.id = song.id;
+        div.innerHTML = `
+          <span class="song-num">${idx + 1}</span>
+          <div class="song-info">
+            <span class="song-title">${song.title}</span>
+            <span class="song-user">@${song.nickname}</span>
+          </div>
+          <div class="song-actions">
+            <button class="song-btn" data-action="up">▲</button>
+            <button class="song-btn" data-action="down">▼</button>
+            <button class="song-btn" data-action="edit">✎</button>
+            <button class="song-btn" data-action="del">✕</button>
+          </div>
+        `;
+        div.querySelectorAll('.song-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleSongAction(song.id, btn.dataset.action, song.title, div);
+          });
+        });
+        songsList.appendChild(div);
+      });
+    }
+
+    function handleSongAction(id, action, currentTitle, itemEl) {
+      if (action === 'up') ws.send(JSON.stringify({ type: 'song:move', id, direction: 'up' }));
+      if (action === 'down') ws.send(JSON.stringify({ type: 'song:move', id, direction: 'down' }));
+      if (action === 'del') ws.send(JSON.stringify({ type: 'song:delete', id }));
+      if (action === 'edit') {
+        const info = itemEl.querySelector('.song-info');
+        const actions = itemEl.querySelector('.song-actions');
+        info.innerHTML = `<input class="song-edit-input" value="${currentTitle}" maxlength="100" />`;
+        actions.innerHTML = `
+          <button class="song-btn song-save">저장</button>
+          <button class="song-btn">취소</button>
+        `;
+        const input = info.querySelector('input');
+        input.focus(); input.select();
+        const save = () => {
+          const title = input.value.trim();
+          if (title) ws.send(JSON.stringify({ type: 'song:edit', id, title }));
+        };
+        actions.querySelector('.song-save').addEventListener('click', save);
+        actions.querySelectorAll('.song-btn')[1].addEventListener('click', () => {
+          ws.send(JSON.stringify({ type: 'song:add', title: '' })); // 서버에서 재전송 트리거 없이 직접 재요청
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.isComposing) save();
+        });
+      }
+    }
 
     function connect() {
       clearTimeout(reconnectTimer);
       ws = new WebSocket(WS_URL);
 
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ type: 'join', nickname }));
-      };
+      ws.onopen = () => ws.send(JSON.stringify({ type: 'join', nickname }));
 
       ws.onmessage = ({ data }) => {
         const msg = JSON.parse(data);
@@ -198,6 +369,8 @@
           chatInput.disabled = false;
           sendBtn.disabled = false;
           appendMessage({ type: 'system', text: '연결됐습니다.' });
+        } else if (msg.type === 'song:list') {
+          renderSongs(msg.songs);
         } else if (msg.type === 'system') {
           if (msg.count !== undefined) countEl.textContent = `${msg.count}명`;
           appendMessage(msg);
@@ -239,9 +412,7 @@
       if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
       ws.send(JSON.stringify({ type: 'chat', text }));
       appendMessage({
-        type: 'chat',
-        nickname,
-        text,
+        type: 'chat', nickname, text,
         time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         isMe: true,
       });
@@ -253,19 +424,13 @@
       if (!name) return;
       nickname = name;
       localStorage.setItem(STORAGE_KEY, name);
-      if (ws?.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'join', nickname }));
-      }
+      if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'join', nickname }));
     }
 
     sendBtn.addEventListener('click', sendChat);
-    chatInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.isComposing) sendChat();
-    });
-    nickBtn.addEventListener('click', changeNickname);
-    nickInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') changeNickname();
-    });
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) sendChat(); });
+    document.getElementById('nick-btn').addEventListener('click', changeNickname);
+    nickInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') changeNickname(); });
 
     connect();
   </script>

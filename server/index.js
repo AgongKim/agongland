@@ -20,6 +20,8 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server });
 
 const clients = new Set();
+const songs = []; // { id, title, nickname }
+let songIdSeq = 0;
 
 const PRIVATE_RANGES = [
   /^127\./,
@@ -68,6 +70,7 @@ wss.on('connection', (ws, req) => {
       nickname = sanitize(msg.nickname) || `익명${Math.floor(Math.random() * 9000) + 1000}`;
       clients.add(ws);
       ws.send(JSON.stringify({ type: 'joined', nickname, count: clients.size }));
+      ws.send(JSON.stringify({ type: 'song:list', songs }));
       broadcastSystem(`${nickname}님이 입장했습니다.`, ws);
       console.log(`접속 [${ip}] ${nickname} (${clients.size}명)`);
     }
@@ -81,6 +84,33 @@ wss.on('connection', (ws, req) => {
         text,
         time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       }, ws);
+    }
+
+    if (msg.type === 'song:add' && nickname) {
+      const title = sanitize(msg.title);
+      if (!title || title.length > 100) return;
+      songs.push({ id: String(++songIdSeq), title, nickname });
+      broadcastAll({ type: 'song:list', songs });
+    }
+
+    if (msg.type === 'song:edit' && nickname) {
+      const title = sanitize(msg.title);
+      const song = songs.find(s => s.id === msg.id);
+      if (song && title) { song.title = title; broadcastAll({ type: 'song:list', songs }); }
+    }
+
+    if (msg.type === 'song:delete' && nickname) {
+      const idx = songs.findIndex(s => s.id === msg.id);
+      if (idx !== -1) { songs.splice(idx, 1); broadcastAll({ type: 'song:list', songs }); }
+    }
+
+    if (msg.type === 'song:move' && nickname) {
+      const idx = songs.findIndex(s => s.id === msg.id);
+      const newIdx = msg.direction === 'up' ? idx - 1 : idx + 1;
+      if (idx !== -1 && newIdx >= 0 && newIdx < songs.length) {
+        [songs[idx], songs[newIdx]] = [songs[newIdx], songs[idx]];
+        broadcastAll({ type: 'song:list', songs });
+      }
     }
   });
 
