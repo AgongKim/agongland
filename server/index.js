@@ -3,6 +3,10 @@ const WebSocket = require('ws');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const QRCode = require('qrcode');
+
+const PORT = process.env.PORT || 8080;
+const LOCAL_IP = getLocalIP();
 
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/') {
@@ -11,6 +15,17 @@ const server = http.createServer((req, res) => {
       if (err) { res.writeHead(404); res.end('Not found'); return; }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(data);
+    });
+  } else if (req.method === 'GET' && req.url === '/qr') {
+    const url = `http://${LOCAL_IP}:${PORT}`;
+    QRCode.toBuffer(url, { width: 200, margin: 2 }, (err, buffer) => {
+      if (err) { res.writeHead(500); res.end(); return; }
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(buffer);
     });
   } else {
     res.writeHead(404);
@@ -149,8 +164,6 @@ function sanitize(str) {
   return str.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-const PORT = process.env.PORT || 8080;
-const LOCAL_IP = getLocalIP();
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`채팅 서버 실행 중`);
   console.log(`  로컬:    ws://localhost:${PORT}`);

@@ -87,12 +87,23 @@ function buildUI() {
       <input id="agl-chat-input" type="text" placeholder="메시지 입력..." maxlength="300" disabled />
       <button id="agl-send-btn" disabled>전송</button>
     </div>
+    <div id="agl-qr">
+      <div id="agl-qr-header">
+        <span>QR로 접속</span>
+        <button id="agl-qr-toggle">▼</button>
+      </div>
+      <div id="agl-qr-body" style="display:none">
+        <img id="agl-qr-img" alt="QR Code" />
+        <span id="agl-qr-url"></span>
+      </div>
+    </div>
   `;
   document.body.appendChild(panel);
 
   document.getElementById('agl-nick-input').value = nickname;
   document.getElementById('agl-toggle').addEventListener('click', togglePanel);
   document.getElementById('agl-songs-toggle').addEventListener('click', toggleSongs);
+  document.getElementById('agl-qr-toggle').addEventListener('click', toggleQR);
   document.getElementById('agl-song-add-btn').addEventListener('click', addSong);
   document.getElementById('agl-song-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.isComposing) addSong();
@@ -124,7 +135,7 @@ function renderSongs(songs) {
   list.innerHTML = '';
   songs.forEach((song, idx) => {
     const div = document.createElement('div');
-    div.className = 'agl-song-item';
+    div.className = 'agl-song-item' + (idx === 0 ? ' agl-song-current' : '');
     div.dataset.id = song.id;
     div.innerHTML = `
       <span class="agl-song-num">${idx + 1}</span>
@@ -186,6 +197,23 @@ function addSong() {
   if (!title || !port) return;
   port.postMessage({ type: 'song:add', title });
   input.value = '';
+}
+
+let qrVisible = false;
+function toggleQR() {
+  qrVisible = !qrVisible;
+  document.getElementById('agl-qr-body').style.display = qrVisible ? 'block' : 'none';
+  document.getElementById('agl-qr-toggle').textContent = qrVisible ? '▲' : '▼';
+  if (qrVisible) {
+    const img = document.getElementById('agl-qr-img');
+    const urlEl = document.getElementById('agl-qr-url');
+    const host = cachedIP || 'localhost';
+    const url = `http://${host}:8080`;
+    if (img && !img.getAttribute('src')) {
+      img.src = `${url}/qr`;
+    }
+    if (urlEl) urlEl.textContent = url;
+  }
 }
 
 function showNicknameRequired() {

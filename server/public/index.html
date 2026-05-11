@@ -61,6 +61,11 @@
       overflow-y: auto;
     }
 
+    .song-current {
+      border: 1px solid #ff0000 !important;
+      border-radius: 4px;
+    }
+
     .song-item {
       display: flex;
       align-items: center;
@@ -384,7 +389,7 @@
       songsList.innerHTML = '';
       songs.forEach((song, idx) => {
         const div = document.createElement('div');
-        div.className = 'song-item';
+        div.className = 'song-item' + (idx === 0 ? ' song-current' : '');
         div.dataset.id = song.id;
         div.innerHTML = `
           <span class="song-num">${idx + 1}</span>
