@@ -24,7 +24,6 @@ cp extension/popup.html     dist/extension/
 cp extension/popup.js       dist/extension/
 cp extension/styles.css     dist/extension/
 cp extension/src/state.js       dist/extension/src/
-cp extension/src/network.js     dist/extension/src/
 cp extension/src/nickname.js    dist/extension/src/
 cp extension/src/songs.js       dist/extension/src/
 cp extension/src/recs.js        dist/extension/src/

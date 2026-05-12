@@ -9,8 +9,7 @@ function init() {
   if (initialized) return;
   initialized = true;
 
-  Promise.all([loadNickname(), getLocalIP()]).then(([name, ip]) => {
-    cachedIP = ip;
+  loadNickname().then((name) => {
     nickname = name;
     buildUI();
     if (nickname) {

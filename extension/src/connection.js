@@ -2,7 +2,7 @@ function connectToBackground() {
   try {
     port = chrome.runtime.connect({ name: 'agongland' });
 
-    port.postMessage({ type: 'join', nickname, serverIP: cachedIP });
+    port.postMessage({ type: 'join', nickname });
 
     port.onMessage.addListener((msg) => {
       if (msg.type === 'joined') {

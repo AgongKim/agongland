@@ -12,7 +12,6 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onMessage.addListener((msg) => {
     if (msg.type === 'join') {
-      if (msg.serverIP) wsURL = `ws://${msg.serverIP}:${WS_PORT}`;
       joinData = msg;
     }
     sendToServer(msg);

@@ -16,7 +16,6 @@
       "matches": ["*://*.youtube.com/watch*"],
       "js": [
         "src/state.js",
-        "src/network.js",
         "src/nickname.js",
         "src/songs.js",
         "src/recs.js",

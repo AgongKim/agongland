@@ -62,7 +62,6 @@ function buildUI() {
       </div>
       <div id="agl-qr-body" style="display:none">
         <img id="agl-qr-img" alt="QR Code" />
-        <span id="agl-qr-url"></span>
       </div>
     </div>
   `;
@@ -126,10 +125,7 @@ function toggleQR() {
   if (qrVisible) {
     const img = document.getElementById('agl-qr-img');
     const urlEl = document.getElementById('agl-qr-url');
-    const host = cachedIP || 'localhost';
-    const url = `http://${host}:8080`;
-    if (img && !img.getAttribute('src')) img.src = `${url}/qr`;
-    if (urlEl) urlEl.textContent = url;
+    if (img && !img.getAttribute('src')) img.src = `http://localhost:8080/qr`;
   }
 }
 
