@@ -51,12 +51,10 @@ http://192.168.x.x:8080
 
 ### 1. 빌드 (최초 1회)
 
-Node.js가 설치된 환경에서 실행합니다.
+Mac/Linux 환경에서 실행합니다.
 
 ```bash
-cd server
-npm install
-npm run build:win
+./build.sh
 ```
 
 `dist/` 폴더에 배포 파일이 생성됩니다.
@@ -64,10 +62,11 @@ npm run build:win
 ```
 dist/
   agongland-server.exe   ← 서버 실행 파일 (Node.js 불필요)
-  시작.bat               ← 서버 시작 스크립트
   방화벽-설정.bat         ← 방화벽 포트 설정 스크립트
   extension/             ← 크롬 익스텐션 폴더
 ```
+
+`dist/` 폴더 전체를 Windows PC로 옮겨서 사용합니다.
 
 ### 2. Windows에서 최초 설정
 
@@ -78,14 +77,14 @@ dist/
 
 ### 3. 서버 실행
 
-`시작.bat` 더블클릭
+`agongland-server.exe` 더블클릭
 
 ### 4. 크롬 익스텐션 설치
 
 1. 크롬 주소창에 `chrome://extensions` 입력
 2. 우측 상단 **개발자 모드** 활성화
 3. **압축 해제된 확장 프로그램 로드** 클릭
-4. `dist/extension/` 폴더 선택
+4. `extension/` 폴더 선택
 
 ---
 
