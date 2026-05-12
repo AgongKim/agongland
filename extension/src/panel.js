@@ -68,6 +68,10 @@ function buildUI() {
   `;
   document.body.appendChild(panel);
 
+  chrome.storage.local.get('panelEnabled', ({ panelEnabled }) => {
+    if (panelEnabled === false) panel.style.display = 'none';
+  });
+
   document.getElementById('agl-nick-input').value = nickname;
   document.getElementById('agl-toggle').addEventListener('click', togglePanel);
   document.getElementById('agl-qr-toggle').addEventListener('click', toggleQR);
@@ -128,6 +132,11 @@ function toggleQR() {
     if (urlEl) urlEl.textContent = url;
   }
 }
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type !== 'agl-toggle-panel' || !panel) return;
+  panel.style.display = msg.enabled ? 'flex' : 'none';
+});
 
 function setConnected(ok) {
   const input = document.getElementById('agl-chat-input');

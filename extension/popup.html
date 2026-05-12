@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      width: 200px;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      margin: 0;
+      padding: 12px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+    #toggle-btn {
+      width: 100%;
+      padding: 8px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #toggle-btn.on {
+      background: #ff0000;
+      color: #fff;
+    }
+    #toggle-btn.on:hover { background: #cc0000; }
+    #toggle-btn.off {
+      background: #333;
+      color: #aaa;
+    }
+    #toggle-btn.off:hover { background: #444; color: #fff; }
+    #status {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>아공랜드 채팅</h2>
+  <button id="toggle-btn" class="on">채팅 끄기</button>
+  <div id="status">현재: 켜짐</div>
+  <script src="popup.js"></script>
+</body>
+</html>

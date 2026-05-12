@@ -3,7 +3,11 @@
   "name": "아공랜드 채팅",
   "version": "1.0.0",
   "description": "아공랜드 채팅서비스",
-  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "아공랜드 채팅"
+  },
+  "permissions": ["storage", "activeTab"],
   "background": {
     "service_worker": "background.js"
   },
