@@ -20,6 +20,8 @@ cd ..
 echo "[3/3] 익스텐션 파일 복사 중..."
 cp extension/manifest.json  dist/extension/
 cp extension/background.js  dist/extension/
+cp extension/popup.html     dist/extension/
+cp extension/popup.js       dist/extension/
 cp extension/styles.css     dist/extension/
 cp extension/src/state.js       dist/extension/src/
 cp extension/src/network.js     dist/extension/src/
