@@ -13,10 +13,11 @@ const { handleRecs } = require('./handlers/recs');
 
 const PORT = process.env.PORT || 8080;
 const LOCAL_IP = getLocalIP();
+const BASE_DIR = process.pkg ? path.dirname(process.execPath) : __dirname;
 
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/') {
-    const file = path.join(__dirname, 'public', 'index.html');
+    const file = path.join(BASE_DIR, 'public', 'index.html');
     fs.readFile(file, (err, data) => {
       if (err) { res.writeHead(404); res.end('Not found'); return; }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

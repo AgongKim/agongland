@@ -19,7 +19,6 @@
 ```
 agongland/
 ├── build.sh                    # Mac/Linux 빌드 스크립트 (exe + 익스텐션 패키징)
-├── 방화벽-설정.bat              # Windows 방화벽 포트 개방 스크립트
 │
 ├── server/                     # Node.js 서버
 │   ├── index.js                # 진입점 — HTTP/WS 서버 설정, 연결 관리(join/close)
@@ -87,42 +86,13 @@ http://192.168.x.x:8080
 
 ## Windows 배포
 
-### 1. 빌드 (최초 1회)
-
-Mac/Linux 환경에서 실행합니다.
+Mac/Linux 환경에서 빌드 스크립트를 실행합니다.
 
 ```bash
 ./build.sh
 ```
 
-`dist/` 폴더에 배포 파일이 생성됩니다.
-
-```
-dist/
-  agongland-server.exe   ← 서버 실행 파일 (Node.js 불필요)
-  방화벽-설정.bat         ← 방화벽 포트 설정 스크립트
-  extension/             ← 크롬 익스텐션 폴더
-```
-
-`dist/` 폴더 전체를 Windows PC로 옮겨서 사용합니다.
-
-### 2. Windows에서 최초 설정
-
-**방화벽 설정 (1회만)**  
-`방화벽-설정.bat` 우클릭 → **관리자 권한으로 실행**
-
-같은 네트워크의 다른 기기(모바일 등)에서 접속하려면 반드시 실행해야 합니다.
-
-### 3. 서버 실행
-
-`agongland-server.exe` 더블클릭
-
-### 4. 크롬 익스텐션 설치
-
-1. 크롬 주소창에 `chrome://extensions` 입력
-2. 우측 상단 **개발자 모드** 활성화
-3. **압축 해제된 확장 프로그램 로드** 클릭
-4. `extension/` 폴더 선택
+`dist/` 폴더가 생성됩니다. 폴더 전체를 Windows PC로 옮긴 후 `dist/README.md`의 안내를 따르세요.
 
 ---
 
