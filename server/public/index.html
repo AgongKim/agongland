@@ -110,9 +110,15 @@
 
     #songs-add {
       display: flex;
+      flex-direction: column;
       gap: 8px;
       padding: 10px 16px;
       border-top: 1px solid #1a1a1a;
+    }
+
+    #song-add-main {
+      display: flex;
+      gap: 8px;
     }
 
     #song-input {
@@ -139,6 +145,66 @@
     }
 
     #song-add-btn:hover { background: #444; color: #fff; }
+
+    #song-singers-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #song-singers-label { font-size: 12px; color: #666; }
+
+    #song-singers-stepper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    #song-singers-count {
+      min-width: 16px;
+      text-align: center;
+      font-weight: 600;
+      color: #e8e8e8;
+    }
+
+    .singers-step-btn {
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 16px;
+      width: 28px;
+      height: 26px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .singers-step-btn:hover:not(:disabled) { background: #333; color: #fff; }
+    .singers-step-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    .song-title-joining { color: #66b2ff; }
+
+    .song-join-btn {
+      background: none;
+      border: 1px solid #ff6b6b;
+      border-radius: 6px;
+      color: #ff6b6b;
+      font-size: 12px;
+      padding: 3px 10px;
+      cursor: pointer;
+    }
+
+    .song-join-btn:hover { background: rgba(255,107,107,0.15); }
+
+    .song-joined-mark {
+      font-size: 13px;
+      color: #4caf50;
+    }
 
     /* 메시지 */
     #messages {
@@ -301,8 +367,18 @@
     <div id="songs-body">
       <div id="songs-list"></div>
       <div id="songs-add">
-        <input id="song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
-        <button id="song-add-btn">추가</button>
+        <div id="song-add-main">
+          <input id="song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
+          <button id="song-add-btn">추가</button>
+        </div>
+        <div id="song-singers-row">
+          <span id="song-singers-label">같이 부르기</span>
+          <div id="song-singers-stepper">
+            <button class="singers-step-btn" id="song-singers-minus" disabled>−</button>
+            <span id="song-singers-count">1</span>명
+            <button class="singers-step-btn" id="song-singers-plus">+</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -352,6 +428,7 @@
       if (e.key === 'Enter' && !e.isComposing) startWithNickname();
     });
     let songsCollapsed = false;
+    let singerCount = 1;
 
     const messagesEl = document.getElementById('messages');
     const countEl = document.getElementById('count');
@@ -363,6 +440,19 @@
     const songsList = document.getElementById('songs-list');
     const songsLabel = document.getElementById('songs-label');
     const songInput = document.getElementById('song-input');
+
+    function updateSingerCount() {
+      document.getElementById('song-singers-count').textContent = singerCount;
+      document.getElementById('song-singers-minus').disabled = singerCount <= 1;
+      document.getElementById('song-singers-plus').disabled = singerCount >= 8;
+    }
+
+    document.getElementById('song-singers-minus').addEventListener('click', () => {
+      if (singerCount > 1) { singerCount--; updateSingerCount(); }
+    });
+    document.getElementById('song-singers-plus').addEventListener('click', () => {
+      if (singerCount < 8) { singerCount++; updateSingerCount(); }
+    });
 
     nickInput.value = nickname;
 
@@ -380,31 +470,43 @@
     function addSong() {
       const title = songInput.value.trim();
       if (!title || !ws || ws.readyState !== WebSocket.OPEN) return;
-      ws.send(JSON.stringify({ type: 'song:add', title }));
+      ws.send(JSON.stringify({ type: 'song:add', title, maxParticipants: singerCount }));
       songInput.value = '';
+      singerCount = 1;
+      updateSingerCount();
     }
 
     function renderSongs(songs) {
       songsLabel.textContent = `노래 목록 (${songs.length})`;
       songsList.innerHTML = '';
       songs.forEach((song, idx) => {
+        const participants = song.participants && song.participants.length > 0 ? song.participants : [song.nickname];
+        const maxP = song.maxParticipants || 1;
+        const isFull = participants.length >= maxP;
+        const alreadyJoined = participants.includes(nickname);
+        const showJoin = maxP > 1 && !isFull && !alreadyJoined;
+        const countLabel = maxP > 1 ? ` · ${participants.length}/${maxP}명` : '';
+        const participantsText = participants.map(p => `@${p}`).join(', ');
+
         const div = document.createElement('div');
         div.className = 'song-item' + (idx === 0 ? ' song-current' : '');
         div.dataset.id = song.id;
         div.innerHTML = `
           <span class="song-num">${idx + 1}</span>
           <div class="song-info">
-            <span class="song-title">${song.title}</span>
-            <span class="song-user">@${song.nickname}</span>
+            <span class="song-title${!isFull && maxP > 1 ? ' song-title-joining' : ''}">${song.title}</span>
+            <span class="song-user">${participantsText}${countLabel}</span>
           </div>
           <div class="song-actions">
+            ${showJoin ? `<button class="song-join-btn" data-action="join">참여</button>` : ''}
+            ${alreadyJoined && isFull && maxP > 1 ? `<span class="song-joined-mark">✓</span>` : ''}
             <button class="song-btn" data-action="up">▲</button>
             <button class="song-btn" data-action="down">▼</button>
             <button class="song-btn" data-action="edit">✎</button>
             <button class="song-btn" data-action="del">✕</button>
           </div>
         `;
-        div.querySelectorAll('.song-btn').forEach(btn => {
+        div.querySelectorAll('[data-action]').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
             handleSongAction(song.id, btn.dataset.action, song.title, div);
@@ -415,6 +517,7 @@
     }
 
     function handleSongAction(id, action, currentTitle, itemEl) {
+      if (action === 'join') ws.send(JSON.stringify({ type: 'song:join', id }));
       if (action === 'up') ws.send(JSON.stringify({ type: 'song:move', id, direction: 'up' }));
       if (action === 'down') ws.send(JSON.stringify({ type: 'song:move', id, direction: 'down' }));
       if (action === 'del') ws.send(JSON.stringify({ type: 'song:delete', id }));
@@ -457,7 +560,6 @@
           countEl.textContent = `${msg.count}명`;
           chatInput.disabled = false;
           sendBtn.disabled = false;
-          appendMessage({ type: 'system', text: '연결됐습니다.' });
         } else if (msg.type === 'song:list') {
           renderSongs(msg.songs);
         } else if (msg.type === 'system') {
@@ -471,7 +573,6 @@
       ws.onclose = () => {
         chatInput.disabled = true;
         sendBtn.disabled = true;
-        appendMessage({ type: 'system', text: '연결 끊김. 5초 후 재연결...' });
         reconnectTimer = setTimeout(connect, 5000);
       };
 

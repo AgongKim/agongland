@@ -35,7 +35,7 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocket.Server({ server });
 
 const clients = new Set();
-const songs = []; // { id, title, nickname }
+const songs = []; // { id, title, nickname, maxParticipants, participants }
 let songIdSeq = 0;
 
 const PRIVATE_RANGES = [
@@ -91,7 +91,6 @@ wss.on('connection', (ws, req) => {
       clients.add(ws);
       ws.send(JSON.stringify({ type: 'joined', nickname, count: clients.size }));
       ws.send(JSON.stringify({ type: 'song:list', songs }));
-      broadcastSystem(`${nickname}님이 입장했습니다.`, ws);
       console.log(`접속 [${ip}] ${nickname} (${clients.size}명)`);
     }
 
@@ -109,7 +108,17 @@ wss.on('connection', (ws, req) => {
     if (msg.type === 'song:add' && nickname) {
       const title = sanitize(msg.title);
       if (!title || title.length > 100) return;
-      songs.push({ id: String(++songIdSeq), title, nickname });
+      const maxParticipants = Math.min(8, Math.max(1, parseInt(msg.maxParticipants) || 1));
+      songs.push({ id: String(++songIdSeq), title, nickname, maxParticipants, participants: [nickname] });
+      broadcastAll({ type: 'song:list', songs });
+    }
+
+    if (msg.type === 'song:join' && nickname) {
+      const song = songs.find(s => s.id === msg.id);
+      if (!song) return;
+      if (song.participants.includes(nickname)) return;
+      if (song.participants.length >= song.maxParticipants) return;
+      song.participants.push(nickname);
       broadcastAll({ type: 'song:list', songs });
     }
 
@@ -137,7 +146,6 @@ wss.on('connection', (ws, req) => {
   ws.on('close', () => {
     clients.delete(ws);
     if (nickname) {
-      broadcastSystem(`${nickname}님이 퇴장했습니다.`);
       console.log(`퇴장 [${ip}] ${nickname} (${clients.size}명)`);
     }
   });

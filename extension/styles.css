@@ -183,9 +183,84 @@
 
 #agl-songs-add {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 5px;
   padding: 6px 10px;
   border-top: 1px solid #1a1a1a;
+}
+
+#agl-song-add-main {
+  display: flex;
+  gap: 4px;
+}
+
+#agl-song-singers {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#agl-singers-count-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#agl-singers-label {
+  font-size: 10px;
+  color: #666;
+}
+
+#agl-singers-stepper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #888;
+}
+
+#agl-singers-count {
+  min-width: 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #e8e8e8;
+}
+
+.agl-singers-step-btn {
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 3px;
+  color: #aaa;
+  font-size: 13px;
+  width: 20px;
+  height: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agl-singers-step-btn:hover:not(:disabled) { background: #333; color: #fff; }
+.agl-singers-step-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+.agl-song-title-joining { color: #66b2ff; }
+
+.agl-song-join {
+  color: #ff6b6b !important;
+  border: 1px solid #ff6b6b !important;
+  border-radius: 3px;
+  font-size: 10px !important;
+}
+
+.agl-song-join:hover { background: rgba(255,107,107,0.15) !important; color: #ff6b6b !important; }
+
+.agl-song-joined {
+  font-size: 10px;
+  color: #4caf50;
+  padding: 0 2px;
+  flex-shrink: 0;
 }
 
 #agl-song-input {

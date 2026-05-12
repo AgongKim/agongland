@@ -73,8 +73,20 @@ function buildUI() {
       <div id="agl-songs-body">
         <div id="agl-songs-list"></div>
         <div id="agl-songs-add">
-          <input id="agl-song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
-          <button id="agl-song-add-btn">추가</button>
+          <div id="agl-song-add-main">
+            <input id="agl-song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
+            <button id="agl-song-add-btn">추가</button>
+          </div>
+          <div id="agl-song-singers">
+            <div id="agl-singers-count-row">
+              <span id="agl-singers-label">같이 부르기</span>
+              <div id="agl-singers-stepper">
+                <button class="agl-singers-step-btn" id="agl-singers-minus" disabled>−</button>
+                <span id="agl-singers-count">1</span>명
+                <button class="agl-singers-step-btn" id="agl-singers-plus">+</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -108,6 +120,12 @@ function buildUI() {
   document.getElementById('agl-song-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.isComposing) addSong();
   });
+  document.getElementById('agl-singers-minus').addEventListener('click', () => {
+    if (singerCount > 1) { singerCount--; updateSingerInputs(); }
+  });
+  document.getElementById('agl-singers-plus').addEventListener('click', () => {
+    if (singerCount < 8) { singerCount++; updateSingerInputs(); }
+  });
   document.getElementById('agl-nick-btn').addEventListener('click', changeNickname);
   document.getElementById('agl-nick-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') changeNickname();
@@ -120,6 +138,17 @@ function buildUI() {
 
 let collapsed = false;
 let songsCollapsed = false;
+let singerCount = 1;
+
+function updateSingerInputs() {
+  const countEl = document.getElementById('agl-singers-count');
+  const minusBtn = document.getElementById('agl-singers-minus');
+  const plusBtn = document.getElementById('agl-singers-plus');
+  if (!countEl) return;
+  countEl.textContent = singerCount;
+  if (minusBtn) minusBtn.disabled = singerCount <= 1;
+  if (plusBtn) plusBtn.disabled = singerCount >= 8;
+}
 
 function toggleSongs() {
   songsCollapsed = !songsCollapsed;
@@ -134,16 +163,26 @@ function renderSongs(songs) {
   if (label) label.textContent = `노래 목록 (${songs.length})`;
   list.innerHTML = '';
   songs.forEach((song, idx) => {
+    const participants = song.participants && song.participants.length > 0 ? song.participants : [song.nickname];
+    const maxP = song.maxParticipants || 1;
+    const isFull = participants.length >= maxP;
+    const alreadyJoined = participants.includes(nickname);
+    const showJoin = maxP > 1 && !isFull && !alreadyJoined;
+    const countLabel = maxP > 1 ? ` · ${participants.length}/${maxP}명` : '';
+    const participantsText = participants.map(p => `@${p}`).join(', ');
+
     const div = document.createElement('div');
     div.className = 'agl-song-item' + (idx === 0 ? ' agl-song-current' : '');
     div.dataset.id = song.id;
     div.innerHTML = `
       <span class="agl-song-num">${idx + 1}</span>
       <div class="agl-song-info">
-        <span class="agl-song-title">${song.title}</span>
-        <span class="agl-song-user">@${song.nickname}</span>
+        <span class="agl-song-title${!isFull && maxP > 1 ? ' agl-song-title-joining' : ''}">${song.title}</span>
+        <span class="agl-song-user">${participantsText}${countLabel}</span>
       </div>
       <div class="agl-song-actions">
+        ${showJoin ? `<button class="agl-song-btn agl-song-join" data-action="join">참여</button>` : ''}
+        ${alreadyJoined && isFull && maxP > 1 ? `<span class="agl-song-joined">✓</span>` : ''}
         <button class="agl-song-btn" data-action="up" title="위로">▲</button>
         <button class="agl-song-btn" data-action="down" title="아래로">▼</button>
         <button class="agl-song-btn" data-action="edit" title="수정">✎</button>
@@ -158,6 +197,7 @@ function renderSongs(songs) {
 }
 
 function handleSongAction(id, action, currentTitle) {
+  if (action === 'join') port?.postMessage({ type: 'song:join', id });
   if (action === 'up') port?.postMessage({ type: 'song:move', id, direction: 'up' });
   if (action === 'down') port?.postMessage({ type: 'song:move', id, direction: 'down' });
   if (action === 'del') port?.postMessage({ type: 'song:delete', id });
@@ -195,8 +235,10 @@ function addSong() {
   const input = document.getElementById('agl-song-input');
   const title = input?.value.trim();
   if (!title || !port) return;
-  port.postMessage({ type: 'song:add', title });
+  port.postMessage({ type: 'song:add', title, maxParticipants: singerCount });
   input.value = '';
+  singerCount = 1;
+  updateSingerInputs();
 }
 
 let qrVisible = false;
@@ -283,7 +325,6 @@ function connectToBackground() {
         if (input) input.value = nickname;
         updateCount(msg.count);
         setConnected(true);
-        appendMessage({ type: 'system', text: '연결됐습니다.' });
       } else if (msg.type === 'song:list') {
         renderSongs(msg.songs);
       } else {
@@ -294,7 +335,6 @@ function connectToBackground() {
     port.onDisconnect.addListener(() => {
       setConnected(false);
       if (!chrome.runtime?.id) return;
-      appendMessage({ type: 'system', text: '연결 끊김. 재연결 중...' });
       setTimeout(connectToBackground, 3000);
     });
   } catch {

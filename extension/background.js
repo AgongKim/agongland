@@ -51,7 +51,6 @@ function connect() {
   };
 
   ws.onclose = () => {
-    broadcast({ type: 'system', text: '연결 끊김. 5초 후 재연결...' });
     reconnectTimer = setTimeout(connect, 5000);
   };
 
