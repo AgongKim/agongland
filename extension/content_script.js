@@ -65,26 +65,36 @@ function buildUI() {
       <span id="agl-title">아공랜드</span>
       <span id="agl-count">0명</span>
     </div>
-    <div id="agl-songs">
-      <div id="agl-songs-header">
-        <span id="agl-songs-label">노래 목록</span>
-        <button id="agl-songs-toggle">▲</button>
+    <div id="agl-tabs">
+      <button class="agl-tab agl-tab-active" data-tab="rec">노래추천</button>
+      <button class="agl-tab" data-tab="songs">노래목록</button>
+    </div>
+    <div id="agl-panel-rec" class="agl-tab-panel">
+      <div class="agl-panel-hd"><span id="agl-rec-label">노래추천 (0)</span></div>
+      <div id="agl-rec-list"></div>
+      <div id="agl-rec-add">
+        <input id="agl-rec-title-input" type="text" placeholder="노래 제목..." maxlength="100" />
+        <div id="agl-rec-add-row">
+          <input id="agl-rec-to-input" type="text" placeholder="추천받는 사람 (선택)" maxlength="12" />
+          <button id="agl-rec-add-btn">추가</button>
+        </div>
       </div>
-      <div id="agl-songs-body">
-        <div id="agl-songs-list"></div>
-        <div id="agl-songs-add">
-          <div id="agl-song-add-main">
-            <input id="agl-song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
-            <button id="agl-song-add-btn">추가</button>
-          </div>
-          <div id="agl-song-singers">
-            <div id="agl-singers-count-row">
-              <span id="agl-singers-label">같이 부르기</span>
-              <div id="agl-singers-stepper">
-                <button class="agl-singers-step-btn" id="agl-singers-minus" disabled>−</button>
-                <span id="agl-singers-count">1</span>명
-                <button class="agl-singers-step-btn" id="agl-singers-plus">+</button>
-              </div>
+    </div>
+    <div id="agl-panel-songs" class="agl-tab-panel" style="display:none">
+      <div class="agl-panel-hd"><span id="agl-songs-label">노래목록 (0)</span></div>
+      <div id="agl-songs-list"></div>
+      <div id="agl-songs-add">
+        <div id="agl-song-add-main">
+          <input id="agl-song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
+          <button id="agl-song-add-btn">추가</button>
+        </div>
+        <div id="agl-song-singers">
+          <div id="agl-singers-count-row">
+            <span id="agl-singers-label">같이 부르기</span>
+            <div id="agl-singers-stepper">
+              <button class="agl-singers-step-btn" id="agl-singers-minus" disabled>−</button>
+              <span id="agl-singers-count">1</span>명
+              <button class="agl-singers-step-btn" id="agl-singers-plus">+</button>
             </div>
           </div>
         </div>
@@ -114,8 +124,17 @@ function buildUI() {
 
   document.getElementById('agl-nick-input').value = nickname;
   document.getElementById('agl-toggle').addEventListener('click', togglePanel);
-  document.getElementById('agl-songs-toggle').addEventListener('click', toggleSongs);
   document.getElementById('agl-qr-toggle').addEventListener('click', toggleQR);
+
+  document.querySelectorAll('.agl-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('agl-rec-add-btn').addEventListener('click', addRecommendation);
+  document.getElementById('agl-rec-title-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing) addRecommendation();
+  });
+
   document.getElementById('agl-song-add-btn').addEventListener('click', addSong);
   document.getElementById('agl-song-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.isComposing) addSong();
@@ -137,8 +156,86 @@ function buildUI() {
 }
 
 let collapsed = false;
-let songsCollapsed = false;
 let singerCount = 1;
+
+function switchTab(tab) {
+  document.querySelectorAll('.agl-tab').forEach(b => b.classList.toggle('agl-tab-active', b.dataset.tab === tab));
+  document.getElementById('agl-panel-rec').style.display = tab === 'rec' ? 'block' : 'none';
+  document.getElementById('agl-panel-songs').style.display = tab === 'songs' ? 'block' : 'none';
+}
+
+function renderRecommendations(recs) {
+  const list = document.getElementById('agl-rec-list');
+  const label = document.getElementById('agl-rec-label');
+  if (!list) return;
+  if (label) label.textContent = `노래추천 (${recs.length})`;
+  list.innerHTML = '';
+  recs.forEach(rec => {
+    const liked = rec.likedBy.includes(nickname);
+    const meta = rec.recommendee ? `@${rec.recommender} → @${rec.recommendee}` : `@${rec.recommender}`;
+    const div = document.createElement('div');
+    div.className = 'agl-rec-item';
+    div.dataset.id = rec.id;
+    div.innerHTML = `
+      <div class="agl-rec-info">
+        <span class="agl-rec-title">${rec.title}</span>
+        <span class="agl-rec-meta">${meta}</span>
+      </div>
+      <div class="agl-rec-actions">
+        <button class="agl-rec-like${liked ? ' liked' : ''}" data-action="like">❤ ${rec.likedBy.length}</button>
+        <button class="agl-rec-btn" data-action="edit">✎</button>
+        <button class="agl-rec-btn" data-action="del">✕</button>
+      </div>
+    `;
+    div.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => handleRecAction(rec.id, btn.dataset.action, rec));
+    });
+    list.appendChild(div);
+  });
+}
+
+function handleRecAction(id, action, rec) {
+  if (action === 'like') { port?.postMessage({ type: 'rec:like', id }); return; }
+  if (action === 'del') { port?.postMessage({ type: 'rec:delete', id }); return; }
+  if (action === 'edit') {
+    const item = document.querySelector(`.agl-rec-item[data-id="${id}"]`);
+    if (!item) return;
+    const info = item.querySelector('.agl-rec-info');
+    const actions = item.querySelector('.agl-rec-actions');
+    info.innerHTML = `
+      <input class="agl-rec-edit-input" placeholder="노래 제목" value="${rec.title}" maxlength="100" />
+      <input class="agl-rec-edit-input" placeholder="추천받는 사람 (선택)" value="${rec.recommendee || ''}" maxlength="12" />
+    `;
+    actions.innerHTML = `
+      <button class="agl-rec-btn agl-rec-save">저장</button>
+      <button class="agl-rec-btn agl-rec-cancel">취소</button>
+    `;
+    const [titleInput, toInput] = info.querySelectorAll('input');
+    titleInput.focus();
+    const save = () => {
+      const title = titleInput.value.trim();
+      if (title) port?.postMessage({ type: 'rec:edit', id, title, recommendee: toInput.value.trim() });
+    };
+    actions.querySelector('.agl-rec-save').addEventListener('click', save);
+    actions.querySelector('.agl-rec-cancel').addEventListener('click', () => {
+      port?.postMessage({ type: 'rec:list:request' });
+    });
+    titleInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) save();
+      if (e.key === 'Escape') actions.querySelector('.agl-rec-cancel').click();
+    });
+  }
+}
+
+function addRecommendation() {
+  const titleInput = document.getElementById('agl-rec-title-input');
+  const toInput = document.getElementById('agl-rec-to-input');
+  const title = titleInput?.value.trim();
+  if (!title || !port) return;
+  port.postMessage({ type: 'rec:add', title, recommendee: toInput?.value.trim() || '' });
+  titleInput.value = '';
+  toInput.value = '';
+}
 
 function updateSingerInputs() {
   const countEl = document.getElementById('agl-singers-count');
@@ -327,6 +424,8 @@ function connectToBackground() {
         setConnected(true);
       } else if (msg.type === 'song:list') {
         renderSongs(msg.songs);
+      } else if (msg.type === 'rec:list') {
+        renderRecommendations(msg.recommendations);
       } else {
         appendMessage(msg);
       }
