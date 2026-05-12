@@ -14,6 +14,44 @@
 
 ---
 
+## 파일 구조
+
+```
+agongland/
+├── build.sh                    # Mac/Linux 빌드 스크립트 (exe + 익스텐션 패키징)
+├── 방화벽-설정.bat              # Windows 방화벽 포트 개방 스크립트
+│
+├── server/                     # Node.js 서버
+│   ├── index.js                # 진입점 — HTTP/WS 서버 설정, 연결 관리(join/close)
+│   ├── lib/
+│   │   ├── network.js          # 로컬 IP 조회(getLocalIP), 내부망 검증(isPrivateIP)
+│   │   ├── state.js            # 공유 상태 — clients Set, songs/recommendations 배열, ID 시퀀스
+│   │   └── broadcast.js        # broadcastAll(전체 전송), sanitize(XSS 방지)
+│   ├── handlers/
+│   │   ├── chat.js             # chat 메시지 처리
+│   │   ├── songs.js            # song:add/join/edit/delete/move/list:request 처리
+│   │   └── recs.js             # rec:add/edit/delete/like/list:request 처리
+│   └── public/
+│       └── index.html          # 모바일 웹 클라이언트
+│
+└── extension/                  # 크롬 익스텐션
+    ├── manifest.json           # 익스텐션 설정 (권한, content_scripts 로드 순서)
+    ├── background.js           # Service Worker — WebSocket 연결 유지, 탭 간 메시지 중계
+    ├── styles.css              # 채팅 패널 스타일
+    └── src/                    # Content Script 모듈 (유튜브 페이지에 주입)
+        ├── state.js            # 공유 변수 — port, nickname, cachedIP
+        ├── network.js          # WebRTC로 로컬 IP 감지(getLocalIP)
+        ├── nickname.js         # 닉네임 저장/불러오기/변경 (chrome.storage)
+        ├── songs.js            # 노래목록 렌더링 및 액션 처리
+        ├── recs.js             # 노래추천 렌더링 및 액션 처리
+        ├── chat.js             # 채팅 메시지 전송/표시
+        ├── panel.js            # UI 빌드, 패널 토글, QR, 탭 전환
+        ├── connection.js       # Background와 연결(connectToBackground), 메시지 수신 라우팅
+        └── main.js             # 진입점 — 초기화(init), IP·닉네임 로드 후 UI 구동
+```
+
+---
+
 ## 개발 환경 실행
 
 ### 사전 요구사항

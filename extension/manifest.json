@@ -10,7 +10,17 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/watch*"],
-      "js": ["content_script.js"],
+      "js": [
+        "src/state.js",
+        "src/network.js",
+        "src/nickname.js",
+        "src/songs.js",
+        "src/recs.js",
+        "src/chat.js",
+        "src/panel.js",
+        "src/connection.js",
+        "src/main.js"
+      ],
       "css": ["styles.css"],
       "run_at": "document_idle"
     }
