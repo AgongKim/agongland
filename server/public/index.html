@@ -29,33 +29,162 @@
     #header h1 { font-size: 16px; font-weight: 700; }
     #count { font-size: 12px; color: #aaa; }
 
-    /* 노래 목록 */
-    #songs {
+    /* 탭 */
+    #tabs {
+      display: flex;
       border-bottom: 1px solid #2a2a2a;
       flex-shrink: 0;
     }
 
-    #songs-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      background: #161616;
-      cursor: pointer;
-    }
-
-    #songs-label { font-size: 13px; font-weight: 600; color: #aaa; }
-
-    #songs-toggle {
+    .tab {
+      flex: 1;
       background: none;
       border: none;
-      color: #666;
-      font-size: 12px;
+      border-bottom: 2px solid transparent;
+      color: #555;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 0;
       cursor: pointer;
     }
 
-    #songs-body { background: #111; }
+    .tab.tab-active { color: #e8e8e8; border-bottom-color: #ff0000; }
+    .tab:hover:not(.tab-active) { color: #aaa; }
 
+    .tab-panel {
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+      background: #111;
+    }
+
+    .panel-hd {
+      padding: 8px 16px;
+      background: #161616;
+      font-size: 13px;
+      font-weight: 600;
+      color: #aaa;
+    }
+
+    /* 노래 추천 */
+    #rec-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .rec-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .rec-info { flex: 1; min-width: 0; }
+
+    .rec-title {
+      font-size: 14px;
+      color: #e8e8e8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .rec-meta { font-size: 11px; color: #666; }
+
+    .rec-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    .rec-like {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 12px;
+      color: #666;
+      font-size: 12px;
+      padding: 3px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .rec-like.liked { color: #ff6b6b; border-color: #ff6b6b; }
+    .rec-like:hover { background: #1e1e1e; }
+
+    .rec-btn {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #888;
+      font-size: 12px;
+      padding: 3px 7px;
+      cursor: pointer;
+    }
+
+    .rec-btn:hover { background: #2a2a2a; color: #fff; }
+    .rec-save { color: #4caf50 !important; border-color: #4caf50 !important; }
+
+    .rec-edit-input {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid #ff6b6b;
+      border-radius: 4px;
+      color: #e8e8e8;
+      font-size: 13px;
+      padding: 4px 8px;
+      outline: none;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    #rec-add {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid #1a1a1a;
+    }
+
+    #rec-title-input {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #e8e8e8;
+      font-size: 14px;
+      padding: 8px 12px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    #rec-title-input:focus { border-color: #ff6b6b; }
+
+    #rec-add-row { display: flex; gap: 8px; }
+
+    #rec-to-input {
+      flex: 1;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #e8e8e8;
+      font-size: 14px;
+      padding: 8px 12px;
+      outline: none;
+    }
+
+    #rec-to-input:focus { border-color: #ff6b6b; }
+
+    #rec-add-btn {
+      background: #333;
+      border: none;
+      border-radius: 8px;
+      color: #ccc;
+      font-size: 13px;
+      padding: 8px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #rec-add-btn:hover { background: #444; color: #fff; }
+
+    /* 노래 목록 */
     #songs-list {
       max-height: 200px;
       overflow-y: auto;
@@ -359,25 +488,37 @@
     <span id="count">0명</span>
   </div>
 
-  <div id="songs">
-    <div id="songs-header">
-      <span id="songs-label">노래 목록 (0)</span>
-      <button id="songs-toggle">▲</button>
+  <div id="tabs">
+    <button class="tab tab-active" data-tab="rec">노래추천</button>
+    <button class="tab" data-tab="songs">노래목록</button>
+  </div>
+
+  <div id="panel-rec" class="tab-panel">
+    <div class="panel-hd"><span id="rec-label">노래추천 (0)</span></div>
+    <div id="rec-list"></div>
+    <div id="rec-add">
+      <input id="rec-title-input" type="text" placeholder="노래 제목..." maxlength="100" />
+      <div id="rec-add-row">
+        <input id="rec-to-input" type="text" placeholder="추천받는 사람 (선택)" maxlength="12" />
+        <button id="rec-add-btn">추가</button>
+      </div>
     </div>
-    <div id="songs-body">
-      <div id="songs-list"></div>
-      <div id="songs-add">
-        <div id="song-add-main">
-          <input id="song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
-          <button id="song-add-btn">추가</button>
-        </div>
-        <div id="song-singers-row">
-          <span id="song-singers-label">같이 부르기</span>
-          <div id="song-singers-stepper">
-            <button class="singers-step-btn" id="song-singers-minus" disabled>−</button>
-            <span id="song-singers-count">1</span>명
-            <button class="singers-step-btn" id="song-singers-plus">+</button>
-          </div>
+  </div>
+
+  <div id="panel-songs" class="tab-panel" style="display:none">
+    <div class="panel-hd"><span id="songs-label">노래목록 (0)</span></div>
+    <div id="songs-list"></div>
+    <div id="songs-add">
+      <div id="song-add-main">
+        <input id="song-input" type="text" placeholder="노래 제목 입력..." maxlength="100" />
+        <button id="song-add-btn">추가</button>
+      </div>
+      <div id="song-singers-row">
+        <span id="song-singers-label">같이 부르기</span>
+        <div id="song-singers-stepper">
+          <button class="singers-step-btn" id="song-singers-minus" disabled>−</button>
+          <span id="song-singers-count">1</span>명
+          <button class="singers-step-btn" id="song-singers-plus">+</button>
         </div>
       </div>
     </div>
@@ -427,7 +568,6 @@
     overlayInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.isComposing) startWithNickname();
     });
-    let songsCollapsed = false;
     let singerCount = 1;
 
     const messagesEl = document.getElementById('messages');
@@ -435,11 +575,97 @@
     const nickInput = document.getElementById('nick-input');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
-    const songsBody = document.getElementById('songs-body');
-    const songsToggle = document.getElementById('songs-toggle');
     const songsList = document.getElementById('songs-list');
     const songsLabel = document.getElementById('songs-label');
     const songInput = document.getElementById('song-input');
+
+    // 탭 전환
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.tab').forEach(b => b.classList.toggle('tab-active', b.dataset.tab === tab));
+        document.getElementById('panel-rec').style.display = tab === 'rec' ? 'block' : 'none';
+        document.getElementById('panel-songs').style.display = tab === 'songs' ? 'block' : 'none';
+      });
+    });
+
+    // 노래추천
+    document.getElementById('rec-add-btn').addEventListener('click', addRecommendation);
+    document.getElementById('rec-title-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) addRecommendation();
+    });
+
+    function addRecommendation() {
+      const titleInput = document.getElementById('rec-title-input');
+      const toInput = document.getElementById('rec-to-input');
+      const title = titleInput.value.trim();
+      if (!title || !ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ type: 'rec:add', title, recommendee: toInput.value.trim() }));
+      titleInput.value = '';
+      toInput.value = '';
+    }
+
+    function renderRecommendations(recs) {
+      const list = document.getElementById('rec-list');
+      const label = document.getElementById('rec-label');
+      label.textContent = `노래추천 (${recs.length})`;
+      list.innerHTML = '';
+      recs.forEach(rec => {
+        const liked = rec.likedBy.includes(nickname);
+        const meta = rec.recommendee ? `@${rec.recommender} → @${rec.recommendee}` : `@${rec.recommender}`;
+        const div = document.createElement('div');
+        div.className = 'rec-item';
+        div.dataset.id = rec.id;
+        div.innerHTML = `
+          <div class="rec-info">
+            <span class="rec-title">${rec.title}</span>
+            <span class="rec-meta">${meta}</span>
+          </div>
+          <div class="rec-actions">
+            <button class="rec-like${liked ? ' liked' : ''}" data-action="like">❤ ${rec.likedBy.length}</button>
+            <button class="rec-btn" data-action="edit">✎</button>
+            <button class="rec-btn" data-action="del">✕</button>
+          </div>
+        `;
+        div.querySelectorAll('[data-action]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleRecAction(rec.id, btn.dataset.action, rec, div);
+          });
+        });
+        list.appendChild(div);
+      });
+    }
+
+    function handleRecAction(id, action, rec, itemEl) {
+      if (action === 'like') { ws.send(JSON.stringify({ type: 'rec:like', id })); return; }
+      if (action === 'del') { ws.send(JSON.stringify({ type: 'rec:delete', id })); return; }
+      if (action === 'edit') {
+        const info = itemEl.querySelector('.rec-info');
+        const actions = itemEl.querySelector('.rec-actions');
+        info.innerHTML = `
+          <input class="rec-edit-input" placeholder="노래 제목" value="${rec.title}" maxlength="100" />
+          <input class="rec-edit-input" placeholder="추천받는 사람 (선택)" value="${rec.recommendee || ''}" maxlength="12" />
+        `;
+        actions.innerHTML = `
+          <button class="rec-btn rec-save">저장</button>
+          <button class="rec-btn">취소</button>
+        `;
+        const [titleInput, toInput] = info.querySelectorAll('input');
+        titleInput.focus();
+        const save = () => {
+          const title = titleInput.value.trim();
+          if (title) ws.send(JSON.stringify({ type: 'rec:edit', id, title, recommendee: toInput.value.trim() }));
+        };
+        actions.querySelector('.rec-save').addEventListener('click', save);
+        actions.querySelectorAll('.rec-btn')[1].addEventListener('click', () => {
+          ws.send(JSON.stringify({ type: 'rec:list:request' }));
+        });
+        titleInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.isComposing) save();
+        });
+      }
+    }
 
     function updateSingerCount() {
       document.getElementById('song-singers-count').textContent = singerCount;
@@ -455,12 +681,6 @@
     });
 
     nickInput.value = nickname;
-
-    document.getElementById('songs-header').addEventListener('click', () => {
-      songsCollapsed = !songsCollapsed;
-      songsBody.style.display = songsCollapsed ? 'none' : 'block';
-      songsToggle.textContent = songsCollapsed ? '▼' : '▲';
-    });
 
     document.getElementById('song-add-btn').addEventListener('click', addSong);
     songInput.addEventListener('keydown', (e) => {
@@ -537,7 +757,7 @@
         };
         actions.querySelector('.song-save').addEventListener('click', save);
         actions.querySelectorAll('.song-btn')[1].addEventListener('click', () => {
-          ws.send(JSON.stringify({ type: 'song:add', title: '' })); // 서버에서 재전송 트리거 없이 직접 재요청
+          ws.send(JSON.stringify({ type: 'song:list:request' }));
         });
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' && !e.isComposing) save();
@@ -562,6 +782,8 @@
           sendBtn.disabled = false;
         } else if (msg.type === 'song:list') {
           renderSongs(msg.songs);
+        } else if (msg.type === 'rec:list') {
+          renderRecommendations(msg.recommendations);
         } else if (msg.type === 'system') {
           if (msg.count !== undefined) countEl.textContent = `${msg.count}명`;
           appendMessage(msg);

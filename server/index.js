@@ -38,6 +38,9 @@ const clients = new Set();
 const songs = []; // { id, title, nickname, maxParticipants, participants }
 let songIdSeq = 0;
 
+const recommendations = []; // { id, title, recommender, recommendee, likedBy }
+let recIdSeq = 0;
+
 const PRIVATE_RANGES = [
   /^127\./,
   /^::1$/,
@@ -91,6 +94,7 @@ wss.on('connection', (ws, req) => {
       clients.add(ws);
       ws.send(JSON.stringify({ type: 'joined', nickname, count: clients.size }));
       ws.send(JSON.stringify({ type: 'song:list', songs }));
+      ws.send(JSON.stringify({ type: 'rec:list', recommendations }));
       console.log(`접속 [${ip}] ${nickname} (${clients.size}명)`);
     }
 
@@ -140,6 +144,45 @@ wss.on('connection', (ws, req) => {
         [songs[idx], songs[newIdx]] = [songs[newIdx], songs[idx]];
         broadcastAll({ type: 'song:list', songs });
       }
+    }
+
+    if (msg.type === 'song:list:request') {
+      ws.send(JSON.stringify({ type: 'song:list', songs }));
+    }
+
+    if (msg.type === 'rec:add' && nickname) {
+      const title = sanitize(msg.title);
+      if (!title || title.length > 100) return;
+      const recommendee = msg.recommendee ? sanitize(msg.recommendee) : '';
+      recommendations.push({ id: String(++recIdSeq), title, recommender: nickname, recommendee, likedBy: [] });
+      broadcastAll({ type: 'rec:list', recommendations });
+    }
+
+    if (msg.type === 'rec:edit' && nickname) {
+      const rec = recommendations.find(r => r.id === msg.id);
+      if (!rec) return;
+      const title = sanitize(msg.title);
+      if (title) rec.title = title;
+      if (msg.recommendee !== undefined) rec.recommendee = sanitize(msg.recommendee);
+      broadcastAll({ type: 'rec:list', recommendations });
+    }
+
+    if (msg.type === 'rec:delete' && nickname) {
+      const idx = recommendations.findIndex(r => r.id === msg.id);
+      if (idx !== -1) { recommendations.splice(idx, 1); broadcastAll({ type: 'rec:list', recommendations }); }
+    }
+
+    if (msg.type === 'rec:like' && nickname) {
+      const rec = recommendations.find(r => r.id === msg.id);
+      if (!rec) return;
+      const likedIdx = rec.likedBy.indexOf(nickname);
+      if (likedIdx === -1) rec.likedBy.push(nickname);
+      else rec.likedBy.splice(likedIdx, 1);
+      broadcastAll({ type: 'rec:list', recommendations });
+    }
+
+    if (msg.type === 'rec:list:request') {
+      ws.send(JSON.stringify({ type: 'rec:list', recommendations }));
     }
   });
 
