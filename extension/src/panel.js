@@ -8,7 +8,7 @@ function buildUI() {
   panel.innerHTML = `
     <div id="agl-header">
       <button id="agl-toggle" title="패널 숨기기">▶</button>
-      <span id="agl-title">아공랜드</span>
+      <span id="agl-title">아공랜드 (바탕화면/dist/agongland-server.exe 실행)</span>
       <span id="agl-count">0명</span>
     </div>
     <div id="agl-tabs">
@@ -124,8 +124,11 @@ function toggleQR() {
   document.getElementById('agl-qr-toggle').textContent = qrVisible ? '▲' : '▼';
   if (qrVisible) {
     const img = document.getElementById('agl-qr-img');
-    const urlEl = document.getElementById('agl-qr-url');
-    if (img && !img.getAttribute('src')) img.src = `http://localhost:8080/qr`;
+    if (img && !img.getAttribute('src')) {
+      chrome.runtime.sendMessage({ type: 'getQR' }, (res) => {
+        if (res && res.dataUrl) img.src = res.dataUrl;
+      });
+    }
   }
 }
 

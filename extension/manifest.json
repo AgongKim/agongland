@@ -8,6 +8,7 @@
     "default_title": "아공랜드 채팅"
   },
   "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://localhost:8080/*"],
   "background": {
     "service_worker": "background.js"
   },

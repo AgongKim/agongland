@@ -22,6 +22,20 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type !== 'getQR') return;
+  fetch(`http://localhost:${WS_PORT}/qr`)
+    .then((r) => r.arrayBuffer())
+    .then((buf) => {
+      let bin = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      sendResponse({ dataUrl: `data:image/png;base64,${btoa(bin)}` });
+    })
+    .catch((err) => sendResponse({ error: err.message }));
+  return true;
+});
+
 function sendToServer(msg) {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(msg));
