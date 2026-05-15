@@ -156,3 +156,43 @@ function showNicknameRequired() {
   if (nickInput) nickInput.focus();
   appendMessage({ type: 'system', text: '닉네임을 설정하면 채팅이 시작됩니다.' });
 }
+
+const AGL_MAX_FLY = 100;
+const AGL_BURST_PARTICLES = 13;
+
+function spawnFlyingEmoji(emoji) {
+  let container = document.getElementById('agl-emoji-fly');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'agl-emoji-fly';
+    document.body.appendChild(container);
+  }
+  const baseLeft = 60 + Math.random() * 300;
+  const baseTopPct = 25 + Math.random() * 45;
+  for (let i = 0; i < AGL_BURST_PARTICLES; i++) {
+    if (container.childElementCount >= AGL_MAX_FLY) {
+      container.firstElementChild?.remove();
+    }
+    const el = document.createElement('span');
+    el.className = 'agl-emoji-burst';
+    el.textContent = emoji;
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 50 + Math.pow(Math.random(), 0.7) * 200;
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance - 30;
+    const rot = (Math.random() - 0.5) * 900;
+    const delay = Math.random() * 80;
+    const duration = 1100 + Math.random() * 600;
+    const size = 22 + Math.random() * 16;
+    el.style.left = baseLeft + 'px';
+    el.style.top = baseTopPct + 'vh';
+    el.style.fontSize = size + 'px';
+    el.style.animationDelay = delay + 'ms';
+    el.style.animationDuration = duration + 'ms';
+    el.style.setProperty('--x', x + 'px');
+    el.style.setProperty('--y', y + 'px');
+    el.style.setProperty('--rot', rot + 'deg');
+    container.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}

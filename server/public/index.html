@@ -471,6 +471,54 @@
     }
 
     #nick-overlay-btn:hover { background: #cc0000; }
+
+    /* 이모티콘 바 */
+    #emoji-bar {
+      display: flex;
+      gap: 4px;
+      padding: 8px 10px;
+      border-top: 1px solid #2a2a2a;
+      background: #141414;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .emoji-btn {
+      flex: 1;
+      min-width: 44px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 22px;
+      padding: 6px 0;
+      cursor: pointer;
+    }
+
+    .emoji-btn:hover { background: #2a2a2a; }
+    .emoji-btn:active { background: #333; }
+
+    /* 폭죽 이모티콘 */
+    #emoji-fly {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 9998;
+    }
+
+    .emoji-burst {
+      position: absolute;
+      font-size: 30px;
+      animation: emoji-burst 1.3s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes emoji-burst {
+      0%   { transform: translate(0, 0) scale(0.3) rotate(0deg); opacity: 0; }
+      20%  { transform: translate(calc(var(--x) * 0.45), calc(var(--y) * 0.45)) scale(1.3) rotate(calc(var(--rot) * 0.3)); opacity: 1; }
+      70%  { opacity: 1; }
+      100% { transform: translate(var(--x), calc(var(--y) + 90px)) scale(0.7) rotate(var(--rot)); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -531,10 +579,21 @@
     <button id="nick-btn">변경</button>
   </div>
 
+  <div id="emoji-bar">
+    <button class="emoji-btn" data-emoji="❤️">❤️</button>
+    <button class="emoji-btn" data-emoji="👍">👍</button>
+    <button class="emoji-btn" data-emoji="🔥">🔥</button>
+    <button class="emoji-btn" data-emoji="🎉">🎉</button>
+    <button class="emoji-btn" data-emoji="😂">😂</button>
+    <button class="emoji-btn" data-emoji="👏">👏</button>
+  </div>
+
   <div id="input-bar">
     <input id="chat-input" type="text" placeholder="메시지 입력..." maxlength="300" disabled />
     <button id="send-btn" disabled>전송</button>
   </div>
+
+  <div id="emoji-fly"></div>
 
   <script>
     const WS_URL = `ws://${location.host}`;
@@ -784,6 +843,8 @@
           renderSongs(msg.songs);
         } else if (msg.type === 'rec:list') {
           renderRecommendations(msg.recommendations);
+        } else if (msg.type === 'emoji') {
+          spawnFlyingEmoji(msg.emoji);
         } else if (msg.type === 'system') {
           if (msg.count !== undefined) countEl.textContent = `${msg.count}명`;
           appendMessage(msg);
@@ -843,6 +904,62 @@
     chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) sendChat(); });
     document.getElementById('nick-btn').addEventListener('click', changeNickname);
     nickInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') changeNickname(); });
+
+    const flyContainer = document.getElementById('emoji-fly');
+    const MAX_FLY = 100;
+    const BURST_PARTICLES = 13;
+
+    function spawnFlyingEmoji(emoji) {
+      const baseLeft = 60 + Math.random() * Math.max(0, window.innerWidth - 120);
+      const baseTopPct = 20 + Math.random() * 45;
+      for (let i = 0; i < BURST_PARTICLES; i++) {
+        if (flyContainer.childElementCount >= MAX_FLY) {
+          flyContainer.firstElementChild?.remove();
+        }
+        const el = document.createElement('span');
+        el.className = 'emoji-burst';
+        el.textContent = emoji;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 50 + Math.pow(Math.random(), 0.7) * 220;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance - 30;
+        const rot = (Math.random() - 0.5) * 900;
+        const delay = Math.random() * 80;
+        const duration = 1100 + Math.random() * 600;
+        const size = 22 + Math.random() * 18;
+        el.style.left = baseLeft + 'px';
+        el.style.top = baseTopPct + 'vh';
+        el.style.fontSize = size + 'px';
+        el.style.animationDelay = delay + 'ms';
+        el.style.animationDuration = duration + 'ms';
+        el.style.setProperty('--x', x + 'px');
+        el.style.setProperty('--y', y + 'px');
+        el.style.setProperty('--rot', rot + 'deg');
+        flyContainer.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+      }
+    }
+
+    let lastSelfEmoji = { emoji: '', time: 0 };
+    const EMOJI_CHAT_DEDUPE_MS = 1500;
+
+    document.querySelectorAll('.emoji-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.dataset.emoji;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(JSON.stringify({ type: 'emoji', emoji }));
+        spawnFlyingEmoji(emoji);
+        const now = Date.now();
+        const isDupe = lastSelfEmoji.emoji === emoji && now - lastSelfEmoji.time < EMOJI_CHAT_DEDUPE_MS;
+        lastSelfEmoji = { emoji, time: now };
+        if (isDupe) return;
+        appendMessage({
+          type: 'chat', nickname, text: emoji,
+          time: (() => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; })(),
+          isMe: true,
+        });
+      });
+    });
 
     if (nickname) connect();
   </script>

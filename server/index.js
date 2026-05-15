@@ -10,6 +10,7 @@ const { sanitize, broadcastAll } = require('./lib/broadcast');
 const { handleChat } = require('./handlers/chat');
 const { handleSongs } = require('./handlers/songs');
 const { handleRecs } = require('./handlers/recs');
+const { handleEmoji } = require('./handlers/emoji');
 
 const PORT = process.env.PORT || 8080;
 const LOCAL_IP = getLocalIP();
@@ -76,6 +77,7 @@ wss.on('connection', (ws, req) => {
     if (!nickname) return;
 
     if (msg.type === 'chat') return handleChat(ws, msg, nickname);
+    if (msg.type === 'emoji') return handleEmoji(ws, msg, nickname);
     if (msg.type.startsWith('song:')) return handleSongs(ws, msg, nickname);
     if (msg.type.startsWith('rec:')) return handleRecs(ws, msg, nickname);
   });

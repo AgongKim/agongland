@@ -16,6 +16,8 @@ function connectToBackground() {
         renderSongs(msg.songs);
       } else if (msg.type === 'rec:list') {
         renderRecommendations(msg.recommendations);
+      } else if (msg.type === 'emoji') {
+        spawnFlyingEmoji(msg.emoji);
       } else {
         appendMessage(msg);
       }
